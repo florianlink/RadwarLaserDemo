@@ -7,6 +7,22 @@
 #include "Objects.h"
 #include "Logo.h"
 
+#include <Keypad.h>
+
+// Keypad setup 
+const byte numRows= 4;
+const byte numCols= 4;
+char keymap[numRows][numCols]= {
+{'1', '2', '3', 'A'},
+{'4', '5', '6', 'B'},
+{'7', '8', '9', 'C'},
+{'*', '0', '#', 'D'} };
+
+byte rowPins[numRows] = {2,3,4,5}; //Rows 0 to 3
+byte colPins[numCols]= {6,7,8,9}; //Columns 0 to 3
+Keypad myKeypad= Keypad(makeKeymap(keymap), rowPins, colPins, numRows, numCols);
+
+
 // Create laser instance (with laser pointer connected to digital pin 5)
 Laser laser(23 /*laser pin*/, 10 /* cs */, 9 /* latch */);
 
@@ -214,8 +230,8 @@ void drawC64Rotate()
     laser.setOffset(x,2048);
     laser.setScale(0.25);
     Drawing::drawObjectRotated(draw_c64, sizeof(draw_c64)/4, centerX, centerY, angle % 360);
-    angle += 4;
-    x += 20;
+    angle += 2;
+    x += 10;
   }
 }
 
@@ -256,12 +272,12 @@ void drawAmigaV()
   int count = 140;
   laser.setScale(0.5);
   laser.setOffset(0,0);
-  long x = -2500;
-  long y = 1000;
-  for (int i = 0;i<count;i++) {
+  long x = -3000;
+  long y = 2000;
+  for (;x<3500;) {
     laser.setOffset(x,y);
     Drawing::drawObject(draw_amiga_v, sizeof(draw_amiga_v)/4);
-    x += 50;
+    x += 30;
   }
 }
 
@@ -389,8 +405,34 @@ void drawC64()
   }
 }
 
+
+char checkKeyboard() {
+  char keypressed = myKeypad.getKey();
+  if (keypressed != NO_KEY)
+  {  Serial.print(keypressed);
+  }
+  return keypressed;
+}
+
+void rect(int a = 0, int b = 4095) {
+  laser.setScale(1);
+  laser.setOffset(0,0);
+  laser.on();
+  laser.sendto(a, a);
+  laser.sendto(a, b);
+  laser.sendto(b, b);
+  laser.sendto(b, a);
+}
+void fadeRect() {
+  for (int x = 0;x<2048;x+=5) {
+    rect(x, 4095-x);
+  }
+}
+
 void loop() {
-  // for filmig, to focus the camera
+  while (checkKeyboard()==NO_KEY) {
+    rect();
+  }
   countDown();
   letterEffect("AZAZA", "DELTA");
   presents("PRESENTS");
@@ -407,15 +449,18 @@ void loop() {
   drawC64Rotate();
   whatAbout3D();
   rotateCube(400);
-  drawBike();
-  globe(200);
   letterEffect("ADERTYSGXGA", "SPREADPOINT");
+  drawBike();
   laserShow("UNITED", "FORCES");
   //drawArduino3D();
+  globe(200);
   drawWeLove("TRISTAR");
-  drawScroller(String("GREETINGS GO OUT TO: E605, SIEBEN, RIFFRAFF, DARK, ANDY AND ALL OTHER OLD AND NEW FRIENDS ON THE WORLD! PROST IHR BABBNASEN!"),0.25,2048,100);
+  laserShow("SOUND BY", "MARK II");
+  drawScroller(String("GREETINGS GO OUT TO: E605 SIEBEN RIFFRAFF DARK ANDY AND ALL OTHER OLD AND NEW FRIENDS ON THE WORLD! PROST IHR BABBNASEN!"),0.25,2048,100);
   laserShow("THE", "END");
-
+  presents("BYE BYE!");
+  fadeRect();
+  delay(2000);
 //  drawObjects();
 }
 
